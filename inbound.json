@@ -1,0 +1,9 @@
+{
+  "LATEST": {
+    "previousVersion": "2020-09-14"
+  },
+  "2020-09-14": {
+    "conversionFunc": "listCard",
+  },
+  "comment": "2020-09-14 (ListCarQueryV1) --> 2020-09-16 (ListCarQueryV2) --> LATEST (ListCarQuery)"
+}

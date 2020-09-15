@@ -7,7 +7,7 @@ import (
 	"go-boilerplate/models"
 	"go-boilerplate/services"
 	"strconv"
-	"strings"
+	// "strings"
 )
 
 type CarsHandler struct {
@@ -18,10 +18,23 @@ func NewInstanceOfCarsHandler(carsService services.CarsService) *CarsHandler {
 	return &CarsHandler{CarsService: carsService}
 }
 
+func (u *CarsHandler) GetSession(c *gin.Context) (models.Session, bool) {
+	i, exists := c.Get("session")
+	if !exists {
+		return models.Session{}, false
+	}
+	session, ok := i.(models.Session)
+	if !ok {
+		return models.Session{}, false
+	}
+	return session, true
+}
+
 func (u *CarsHandler) GetAll(c *gin.Context) {
-	authToken := c.Request.Header.Get("Authorization")
-	if authToken != "" {
-		authToken = strings.ReplaceAll(authToken, "Bearer ", "")
+	session, exists := u.GetSession(c)
+	if !exists {
+		c.JSON(403, gin.H{"message": "error: unauthorized"})
+		return
 	}
 
 	page := c.DefaultQuery("page", "1")
@@ -63,7 +76,7 @@ func (u *CarsHandler) GetAll(c *gin.Context) {
 		return
 	}
 
-	cars, err := u.CarsService.GetAll(authToken, query)
+	cars, err := u.CarsService.GetAll(session, query)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -78,12 +91,13 @@ func (u *CarsHandler) GetAll(c *gin.Context) {
 func (u *CarsHandler) GetByID(c *gin.Context) {
 	carsID := c.Param("id")
 
-	authToken := c.Request.Header.Get("Authorization")
-	if authToken != "" {
-		authToken = strings.ReplaceAll(authToken, "Bearer ", "")
+	session, exists := u.GetSession(c)
+	if !exists {
+		c.JSON(403, gin.H{"message": "error: unauthorized"})
+		return
 	}
 
-	car, err := u.CarsService.GetByID(authToken, carsID)
+	car, err := u.CarsService.GetByID(session, carsID)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -104,9 +118,10 @@ func (u *CarsHandler) Create(c *gin.Context) {
 		return
 	}
 
-	authToken := c.Request.Header.Get("Authorization")
-	if authToken != "" {
-		authToken = strings.ReplaceAll(authToken, "Bearer ", "")
+	session, exists := u.GetSession(c)
+	if !exists {
+		c.JSON(403, gin.H{"message": "error: unauthorized"})
+		return
 	}
 
 	v := validator.New()
@@ -115,7 +130,7 @@ func (u *CarsHandler) Create(c *gin.Context) {
 		return
 	}
 
-	err := u.CarsService.Create(authToken, body)
+	err := u.CarsService.Create(session, body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -138,9 +153,10 @@ func (u *CarsHandler) Update(c *gin.Context) {
 		return
 	}
 
-	authToken := c.Request.Header.Get("Authorization")
-	if authToken != "" {
-		authToken = strings.ReplaceAll(authToken, "Bearer ", "")
+	session, exists := u.GetSession(c)
+	if !exists {
+		c.JSON(403, gin.H{"message": "error: unauthorized"})
+		return
 	}
 
 	v := validator.New()
@@ -149,7 +165,7 @@ func (u *CarsHandler) Update(c *gin.Context) {
 		return
 	}
 
-	err := u.CarsService.Update(authToken, carsID, body)
+	err := u.CarsService.Update(session, carsID, body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -159,14 +175,15 @@ func (u *CarsHandler) Update(c *gin.Context) {
 }
 
 func (u *CarsHandler) Delete(c *gin.Context) {
-	authToken := c.Request.Header.Get("Authorization")
-	if authToken != "" {
-		authToken = strings.ReplaceAll(authToken, "Bearer ", "")
+	session, exists := u.GetSession(c)
+	if !exists {
+		c.JSON(403, gin.H{"message": "error: unauthorized"})
+		return
 	}
 
 	carsID := c.Param("id")
 
-	err := u.CarsService.Delete(authToken, carsID)
+	err := u.CarsService.Delete(session, carsID)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return

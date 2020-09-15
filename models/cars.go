@@ -25,6 +25,14 @@ type ListCarQuery struct {
 	Year  int    `json:"year"`
 }
 
+type ListCarQueryV1 struct {
+	Page  int    `json:"page"`
+	Limit int    `json:"limit"`
+	Make  string `json:"make"`
+	Model string `json:"model"`
+	Year  int    `json:"year"`
+}
+
 func (q *ListCarQuery) Filter(email string) bson.M {
 	andFilters := []bson.M{
 		bson.M{
@@ -89,6 +97,12 @@ type CreateCar struct {
 	Year  int    `json:"year"`
 }
 
+type CreateCarV1 struct {
+	Make  string `json:"make"`
+	Model string `json:"model"`
+	Year  int    `json:"year"`
+}
+
 func (c *CreateCar) Valid() error {
 	if c.Make == "" {
 		return errors.New("Error: Make is missing")
@@ -131,4 +145,11 @@ func (u *UpdateCar) Update() bson.M {
 		return nil
 	}
 	return bson.M{"$set": update}
+}
+
+type UpdateCarV1 struct {
+	Make   string `json:"make"`
+	Model  string `json:"model"`
+	Year   int    `json:"year"`
+	Status string `json:"status"`
 }

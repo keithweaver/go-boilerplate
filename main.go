@@ -26,7 +26,7 @@ func ValidateAuth(userRepository repositories.UserRepository) gin.HandlerFunc {
 
 		authToken = strings.ReplaceAll(authToken, "Bearer ", "")
 
-		found, _, err := userRepository.GetSessionById(authToken)
+		found, session, err := userRepository.GetSessionById(authToken)
 		if err != nil {
 			fmt.Printf("err :: %+v\n", err)
 			c.AbortWithStatus(403)
@@ -37,15 +37,18 @@ func ValidateAuth(userRepository repositories.UserRepository) gin.HandlerFunc {
 			c.AbortWithStatus(403)
 			return
 		}
+		c.Set("session", session)
+
+		c.Next()
 	}
 }
 
 func CORSMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		c.Writer.Header().Set("Access-Control-Allow-Origin", "example.com") // <--- set this to be your webapp
 		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
 		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
 
 		if c.Request.Method == "OPTIONS" {
 			c.AbortWithStatus(204)
@@ -69,6 +72,9 @@ func main() {
 
 	db := client.Database(dbName)
 
+	// Utils
+	translationUtils := utils.NewInstanceOfTranslationUtils()
+
 	// Repositories
 	userRepository := repositories.NewInstanceOfUserRepository(db)
 	carsRepository := repositories.NewInstanceOfCarsRepository(db)
@@ -78,8 +84,8 @@ func main() {
 	carsService := services.NewInstanceOfCarsService(userRepository, carsRepository)
 
 	// Handlers
-	userHandler := handlers.NewInstanceOfUserHandler(userService)
-	carsHandler := handlers.NewInstanceOfCarsHandler(carsService)
+	userHandler := handlers.NewInstanceOfUserHandler(userService, translationUtils)
+	carsHandler := handlers.NewInstanceOfCarsHandler(carsService, translationUtils)
 
 	router := gin.Default()
 	router.Use(CORSMiddleware())

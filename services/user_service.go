@@ -14,6 +14,14 @@ type UserService struct {
 	userRepository repositories.UserRepository
 }
 
+type UserServiceContract interface {
+	SignUp(body models.SignUpBody) (string, error)
+	IsValidPassword(password string) bool
+	GetEncryptedPassword(password string) string
+	SignIn(body models.SignInBody) (string, error)
+	LogOut(authToken string) error
+}
+
 func NewInstanceOfUserService(userRepository repositories.UserRepository) UserService {
 	return UserService{userRepository: userRepository}
 }
@@ -23,7 +31,7 @@ func (u *UserService) SignUp(body models.SignUpBody) (string, error) {
 	emailTrimmed := strings.Trim(emailLowerCase, " ")
 
 	// Verify password meets sign up requirements
-	if !u.isValidPassword(body.Password) {
+	if !u.IsValidPassword(body.Password) {
 		return "", errors.New("error: Your password does not meet requirements.")
 	}
 
@@ -40,7 +48,7 @@ func (u *UserService) SignUp(body models.SignUpBody) (string, error) {
 	// Sign up user
 	newUser := models.User{
 		Email:    emailTrimmed,
-		Password: u.getEncryptedPassword(body.Password),
+		Password: u.GetEncryptedPassword(body.Password),
 		Name:     body.Name,
 		Created:  time.Now(),
 	}
@@ -53,7 +61,7 @@ func (u *UserService) SignUp(body models.SignUpBody) (string, error) {
 	return u.signIn(emailTrimmed, body.Password)
 }
 
-func (u *UserService) isValidPassword(password string) bool {
+func (u *UserService) IsValidPassword(password string) bool {
 	// TODO - Insert your password rules. Ex. Must have a digit, special
 	// characters, is super long. I choose not to include password and security
 	// since it's a challenge and is up to the developer to understand how it
@@ -66,7 +74,7 @@ func (u *UserService) isValidPassword(password string) bool {
 	return false
 }
 
-func (u *UserService) getEncryptedPassword(password string) string {
+func (u *UserService) GetEncryptedPassword(password string) string {
 	// TODO - See comment in the isValidPassword
 	return password
 }
@@ -79,7 +87,7 @@ func (u *UserService) SignIn(body models.SignInBody) (string, error) {
 
 func (u *UserService) signIn(email string, password string) (string, error) {
 	// Encrypt password
-	encryptedPassword := u.getEncryptedPassword(password)
+	encryptedPassword := u.GetEncryptedPassword(password)
 
 	// Grab user
 	found, user, err := u.userRepository.GetUserByEmail(email)
