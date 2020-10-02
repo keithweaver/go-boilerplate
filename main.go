@@ -72,9 +72,6 @@ func main() {
 
 	db := client.Database(dbName)
 
-	// Utils
-	translationUtils := utils.NewInstanceOfTranslationUtils()
-
 	// Repositories
 	userRepository := repositories.NewInstanceOfUserRepository(db)
 	carsRepository := repositories.NewInstanceOfCarsRepository(db)
@@ -84,8 +81,8 @@ func main() {
 	carsService := services.NewInstanceOfCarsService(userRepository, carsRepository)
 
 	// Handlers
-	userHandler := handlers.NewInstanceOfUserHandler(userService, translationUtils)
-	carsHandler := handlers.NewInstanceOfCarsHandler(carsService, translationUtils)
+	userHandler := handlers.NewInstanceOfUserHandler(userService)
+	carsHandler := handlers.NewInstanceOfCarsHandler(carsService)
 
 	router := gin.Default()
 	router.Use(CORSMiddleware())
