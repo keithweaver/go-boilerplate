@@ -11,6 +11,7 @@ import (
 	"go-boilerplate/handlers"
 	"go-boilerplate/repositories"
 	"go-boilerplate/services"
+	"go-boilerplate/utils"
 	// "github.com/gin-contrib/cors"
 	// "database/sql"
 	_ "github.com/go-sql-driver/mysql"
@@ -84,8 +85,8 @@ func main() {
 	carsService := services.NewInstanceOfCarsService(userRepository, carsRepository)
 
 	// Handlers
-	userHandler := handlers.NewInstanceOfUserHandler(userService, translationUtils)
-	carsHandler := handlers.NewInstanceOfCarsHandler(carsService, translationUtils)
+	userHandler := handlers.NewInstanceOfUserHandler(userService)
+	carsHandler := handlers.NewInstanceOfCarsHandler(carsService)
 
 	router := gin.Default()
 	router.Use(CORSMiddleware())
@@ -108,7 +109,7 @@ func main() {
 		carsAPI.GET("/", ValidateAuth(userRepository), carsHandler.GetAll)
 		carsAPI.GET("/:id", ValidateAuth(userRepository), carsHandler.GetByID)
 		carsAPI.POST("/", ValidateAuth(userRepository), carsHandler.Create)
-		carsAPI.PUT("/:id", ValidateAuth(userRepository), carsHandler.Update)
+		carsAPI.PUT("/:id", ValidateAuth(userRepository), translationUtils.InboundConversionByRequestBody, carsHandler.Update)
 		carsAPI.DELETE("/:id", ValidateAuth(userRepository), carsHandler.Delete)
 	}
 

@@ -8,6 +8,7 @@ import (
 	"go-boilerplate/services"
 	"strconv"
 	// "strings"
+	"github.com/mitchellh/mapstructure"
 )
 
 type CarsHandler struct {
@@ -142,11 +143,17 @@ func (u *CarsHandler) Create(c *gin.Context) {
 func (u *CarsHandler) Update(c *gin.Context) {
 	carsID := c.Param("id")
 
-	var body models.UpdateCar
-	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(400, gin.H{"message": err.Error()})
+	// if err := c.ShouldBindJSON(&body); err != nil {
+	// 	c.JSON(400, gin.H{"message": err.Error()})
+	// 	return
+	// }
+	bodyAsMap, exists := c.Get("body")
+	if !exists {
+		c.JSON(400, gin.H{"message": "invalid payload"})
 		return
 	}
+	var body models.UpdateCar
+	mapstructure.Decode(bodyAsMap, &body)
 
 	if err := body.Valid(); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})

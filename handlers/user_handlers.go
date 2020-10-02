@@ -11,11 +11,10 @@ import (
 
 type UserHandler struct {
 	UserService services.UserService
-	TranslationUtils utils.TranslationUtils
 }
 
-func NewInstanceOfUserHandler(userService services.UserService, translationUtils utils.TranslationUtils) *UserHandler {
-	return &UserHandler{UserService: userService, TranslationUtils: translationUtils}
+func NewInstanceOfUserHandler(userService services.UserService) *UserHandler {
+	return &UserHandler{UserService: userService}
 }
 
 func (u *UserHandler) SignIn(c *gin.Context) {

@@ -17,6 +17,14 @@ type Car struct {
 	Created time.Time          `json:"created",bson:"created"`
 }
 
+type CarV1 struct {
+	ID     primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Make   string             `json:"make",bson:"make"`
+	Model  string             `json:"model",bson:"model"`
+	Year   int                `json:"year",bson:"year"`
+	Status string             `json:"status",bson:"status"`
+}
+
 type ListCarQuery struct {
 	Page  int    `json:"page"`
 	Limit int    `json:"limit"`
@@ -26,6 +34,11 @@ type ListCarQuery struct {
 }
 
 type ListCarQueryV1 struct {
+	Page  int `json:"page"`
+	Limit int `json:"limit"`
+}
+
+type ListCarQueryV2 struct {
 	Page  int    `json:"page"`
 	Limit int    `json:"limit"`
 	Make  string `json:"make"`
@@ -147,9 +160,15 @@ func (u *UpdateCar) Update() bson.M {
 	return bson.M{"$set": update}
 }
 
-type UpdateCarV1 struct {
+type UpdateCarV2 struct {
 	Make   string `json:"make"`
 	Model  string `json:"model"`
+	Year   int    `json:"year"`
+	Status string `json:"status"`
+}
+
+type UpdateCarV1 struct {
+	Make   string `json:"make"`
 	Year   int    `json:"year"`
 	Status string `json:"status"`
 }

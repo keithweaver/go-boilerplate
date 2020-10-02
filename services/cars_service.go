@@ -1,7 +1,7 @@
 package services
 
 import (
-	// "fmt"
+	"fmt"
 	"time"
 	// "strings"
 	"go-boilerplate/models"
@@ -53,6 +53,7 @@ func (c *CarsService) Create(session models.Session, body models.CreateCar) erro
 }
 
 func (c *CarsService) Update(session models.Session, carID string, body models.UpdateCar) error {
+	fmt.Printf("Update :: body :: %+v\n", body)
 	// Update car
 	err := c.carsRepository.Update(session.Email, carID, body)
 	if err != nil {

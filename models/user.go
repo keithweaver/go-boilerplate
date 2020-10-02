@@ -15,9 +15,10 @@ type User struct {
 
 type Session struct {
 	ID      primitive.ObjectID `json:"id" bson:"_id,omitempty"`
-	Email   string             `json:"email",bson:"email"`
-	Expiry  time.Time          `json:"expiry",bson:"expiry"`
-	Created time.Time          `json:"created",bson:"created"`
+	Email   string             `json:"email" bson:"email"`
+	Expiry  time.Time          `json:"expiry" bson:"expiry"`
+	Created time.Time          `json:"created" bson:"created"`
+	Version string             `json:"version" bson:"version"`
 }
 
 type SignInBody struct {
