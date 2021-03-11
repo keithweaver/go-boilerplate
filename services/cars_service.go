@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+	"go-boilerplate/logging"
 	// "fmt"
 	"time"
 	// "strings"
@@ -11,15 +13,18 @@ import (
 )
 
 type CarsService struct {
+	logger logging.Logger
 	userRepository repositories.UserRepository
 	carsRepository repositories.CarsRepository
 }
 
-func NewInstanceOfCarsService(userRepository repositories.UserRepository, carsRepository repositories.CarsRepository) CarsService {
-	return CarsService{userRepository: userRepository, carsRepository: carsRepository}
+func NewInstanceOfCarsService(logger logging.Logger, userRepository repositories.UserRepository, carsRepository repositories.CarsRepository) CarsService {
+	return CarsService{logger, userRepository, carsRepository}
 }
 
-func (c *CarsService) GetAll(session models.Session, query models.ListCarQuery) ([]models.Car, error) {
+func (c *CarsService) GetAll(ctx context.Context, session models.Session, query models.ListCarQuery) ([]models.Car, error) {
+	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "GetAll")
+
 	cars, err := c.carsRepository.List(session.Email, query)
 	if err != nil {
 		return []models.Car{}, err
@@ -27,7 +32,9 @@ func (c *CarsService) GetAll(session models.Session, query models.ListCarQuery) 
 	return cars, nil
 }
 
-func (c *CarsService) GetByID(session models.Session, carID string) (models.Car, error) {
+func (c *CarsService) GetByID(ctx context.Context, session models.Session, carID string) (models.Car, error) {
+	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "GetByID")
+
 	car, err := c.carsRepository.Get(session.Email, carID)
 	if err != nil {
 		return models.Car{}, err
@@ -35,7 +42,8 @@ func (c *CarsService) GetByID(session models.Session, carID string) (models.Car,
 	return car, nil
 }
 
-func (c *CarsService) Create(session models.Session, body models.CreateCar) error {
+func (c *CarsService) Create(ctx context.Context, session models.Session, body models.CreateCar) error {
+	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "Create")
 	// Create new car object
 	car := models.Car{
 		Make:    body.Make,
@@ -52,7 +60,8 @@ func (c *CarsService) Create(session models.Session, body models.CreateCar) erro
 	return nil
 }
 
-func (c *CarsService) Update(session models.Session, carID string, body models.UpdateCar) error {
+func (c *CarsService) Update(ctx context.Context, session models.Session, carID string, body models.UpdateCar) error {
+	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "Update")
 	// Update car
 	err := c.carsRepository.Update(session.Email, carID, body)
 	if err != nil {
@@ -61,7 +70,9 @@ func (c *CarsService) Update(session models.Session, carID string, body models.U
 	return nil
 }
 
-func (c *CarsService) Delete(session models.Session, carID string) error {
+func (c *CarsService) Delete(ctx context.Context, session models.Session, carID string) error {
+	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "Delete")
+
 	// Delete car
 	err := c.carsRepository.Delete(session.Email, carID)
 	if err != nil {

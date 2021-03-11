@@ -15,3 +15,5 @@
 # vendor/
 .DS_Store
 TODO.md
+logs.txt
+.idea/

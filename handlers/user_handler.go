@@ -4,17 +4,19 @@ import (
 	// "fmt"
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
+	"go-boilerplate/logging"
 	"go-boilerplate/models"
 	"go-boilerplate/services"
 	"strings"
 )
 
 type UserHandler struct {
-	UserService services.UserService
+	logger logging.Logger
+	userService services.UserService
 }
 
-func NewInstanceOfUserHandler(userService services.UserService) *UserHandler {
-	return &UserHandler{UserService: userService}
+func NewInstanceOfUserHandler(logger logging.Logger, userService services.UserService) *UserHandler {
+	return &UserHandler{logger, userService}
 }
 
 func (u *UserHandler) SignIn(c *gin.Context) {
@@ -30,7 +32,7 @@ func (u *UserHandler) SignIn(c *gin.Context) {
 		return
 	}
 
-	token, err := u.UserService.SignIn(body)
+	token, err := u.userService.SignIn(body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -53,7 +55,7 @@ func (u *UserHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	token, err := u.UserService.SignUp(body)
+	token, err := u.userService.SignUp(body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -67,7 +69,7 @@ func (u *UserHandler) LogOut(c *gin.Context) {
 	authToken := c.Request.Header.Get("Authorization")
 	authToken = strings.ReplaceAll(authToken, "Bearer ", "")
 
-	err := u.UserService.LogOut(authToken)
+	err := u.userService.LogOut(authToken)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
