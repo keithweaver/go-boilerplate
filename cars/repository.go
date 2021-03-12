@@ -1,12 +1,8 @@
-package repositories
+package cars
 
 import (
 	"context"
-	// "errors"
-	// "fmt"
-	// "time"
-	// "log"
-	"go-boilerplate/models"
+
 	// "database/sql"
 	// "github.com/jmoiron/sqlx"
 	"go.mongodb.org/mongo-driver/bson"
@@ -15,17 +11,18 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type CarsRepository struct {
+type Repository struct {
 	db *mongo.Database
+	collectionName string
 }
 
-func NewInstanceOfCarsRepository(db *mongo.Database) CarsRepository {
-	return CarsRepository{db: db}
+func NewInstanceOfCarsRepository(db *mongo.Database) Repository {
+	return Repository{db: db, collectionName: "cars"}
 }
 
-func (c *CarsRepository) List(email string, query models.ListCarQuery) ([]models.Car, error) {
+func (c *Repository) List(email string, query ListCarQuery) ([]Car, error) {
 	filters := query.Filter(email)
-	var cars []models.Car
+	var cars []Car
 
 	options := options.Find()
 
@@ -36,13 +33,13 @@ func (c *CarsRepository) List(email string, query models.ListCarQuery) ([]models
 	// Add timestamp
 	options.SetSort(bson.M{"created": -1})
 
-	cursor, err := c.db.Collection("cars").Find(context.Background(), filters, options)
+	cursor, err := c.db.Collection(c.collectionName).Find(context.Background(), filters, options)
 	if err != nil {
-		return []models.Car{}, err
+		return []Car{}, err
 	}
 
 	for cursor.Next(context.Background()) {
-		car := models.Car{}
+		car := Car{}
 		err := cursor.Decode(&car)
 		if err != nil {
 			//handle err
@@ -53,24 +50,24 @@ func (c *CarsRepository) List(email string, query models.ListCarQuery) ([]models
 	return cars, nil
 }
 
-func (c *CarsRepository) Get(email string, carID string) (models.Car, error) {
+func (c *Repository) Get(email string, carID string) (Car, error) {
 	docID, err := primitive.ObjectIDFromHex(carID)
 	if err != nil {
-		return models.Car{}, err
+		return Car{}, err
 	}
 
 	filter := bson.M{"_id": docID, "email": email}
 
-	var result models.Car
-	err = c.db.Collection("cars").FindOne(context.TODO(), filter).Decode(&result)
+	var result Car
+	err = c.db.Collection(c.collectionName).FindOne(context.TODO(), filter).Decode(&result)
 	if err != nil {
-		return models.Car{}, err
+		return Car{}, err
 	}
 	return result, nil
 }
 
-func (c *CarsRepository) Save(car models.Car) error {
-	_, err := c.db.Collection("cars").InsertOne(context.TODO(), car)
+func (c *Repository) Save(car Car) error {
+	_, err := c.db.Collection(c.collectionName).InsertOne(context.TODO(), car)
 	if err != nil {
 		return err
 	}
@@ -78,7 +75,7 @@ func (c *CarsRepository) Save(car models.Car) error {
 	return nil
 }
 
-func (c *CarsRepository) Update(email string, carID string, body models.UpdateCar) error {
+func (c *Repository) Update(email string, carID string, body UpdateCar) error {
 	docID, err := primitive.ObjectIDFromHex(carID)
 	if err != nil {
 		return err
@@ -90,21 +87,21 @@ func (c *CarsRepository) Update(email string, carID string, body models.UpdateCa
 	}
 	filter := bson.M{"_id": docID, "email": email}
 
-	_, err = c.db.Collection("cars").UpdateOne(context.TODO(), filter, update)
+	_, err = c.db.Collection(c.collectionName).UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *CarsRepository) Delete(email string, carID string) error {
+func (c *Repository) Delete(email string, carID string) error {
 	docID, err := primitive.ObjectIDFromHex(carID)
 	if err != nil {
 		return err
 	}
 
 	filter := bson.M{"_id": docID, "email": email}
-	_, err = c.db.Collection("cars").DeleteOne(context.TODO(), filter)
+	_, err = c.db.Collection(c.collectionName).DeleteOne(context.TODO(), filter)
 	if err != nil {
 		return err
 	}

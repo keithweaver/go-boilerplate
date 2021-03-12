@@ -11,7 +11,13 @@ You will need to update `isValidPassword` in `services/user_service.go`.
 
 ## Code Structure
 
-TODO
+### Why move from handlers, services, repositories in individual folders to domain specific?
+
+For extendability is the short answer.
+
+In the original version of this boilerplate, I had `services/`, `handlers/`, `repositories/` and `models/` all be folders. In each folder it would be `<domain>_<folder>.go`. For example, `handlers/cars_handler.go`. 
+
+This domain specific approach allows for new packages to be added and deleted depending on the package. I can add a package for individual service, and if you do not want it, just delete it.
 
 ### Logging & Context
 

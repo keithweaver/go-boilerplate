@@ -1,9 +1,9 @@
-package handlers
+package health
 
 import (
 	"github.com/gin-gonic/gin"
 )
 
-func HealthCheck(c *gin.Context) {
+func Check(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Healthy"})
 }
