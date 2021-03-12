@@ -3,7 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
+	"go-boilerplate/auth"
+	"go-boilerplate/logging"
+	"go-boilerplate/middleware"
+
+	//"strings"
 	// "time"
 
 	"github.com/gin-gonic/gin"
@@ -16,51 +20,12 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-func ValidateAuth(userRepository repositories.UserRepository) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		authToken := c.Request.Header.Get("Authorization")
-		if authToken == "" {
-			c.AbortWithStatus(403)
-			return
-		}
 
-		authToken = strings.ReplaceAll(authToken, "Bearer ", "")
 
-		found, session, err := userRepository.GetSessionById(authToken)
-		if err != nil {
-			fmt.Printf("err :: %+v\n", err)
-			c.AbortWithStatus(403)
-			return
-		}
-		if !found {
-			fmt.Println("Not found")
-			c.AbortWithStatus(403)
-			return
-		}
-		c.Set("session", session)
-
-		c.Next()
-	}
-}
-
-func CORSMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "example.com") // <--- set this to be your webapp
-		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
-
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-
-		c.Next()
-	}
-}
 
 func main() {
 	fmt.Println("Starting...")
+	logger := logging.NewLogger()
 
 	dbName := "demoDB" // move to env
 	client, err := db.CreateDatabaseConnection(dbName)
@@ -77,15 +42,15 @@ func main() {
 	carsRepository := repositories.NewInstanceOfCarsRepository(db)
 
 	// Services
-	userService := services.NewInstanceOfUserService(userRepository)
-	carsService := services.NewInstanceOfCarsService(userRepository, carsRepository)
+	userService := services.NewInstanceOfUserService(logger, userRepository)
+	carsService := services.NewInstanceOfCarsService(logger, userRepository, carsRepository)
 
 	// Handlers
-	userHandler := handlers.NewInstanceOfUserHandler(userService)
-	carsHandler := handlers.NewInstanceOfCarsHandler(carsService)
+	userHandler := handlers.NewInstanceOfUserHandler(logger, userService)
+	carsHandler := handlers.NewInstanceOfCarsHandler(logger, carsService)
 
 	router := gin.Default()
-	router.Use(CORSMiddleware())
+	router.Use(middleware.CORSMiddleware())
 
 	healthAPI := router.Group("/")
 	{
@@ -97,16 +62,16 @@ func main() {
 	{
 		userAPI.POST("/signin", userHandler.SignIn)
 		userAPI.POST("/signup", userHandler.SignUp)
-		userAPI.POST("/logout", ValidateAuth(userRepository), userHandler.LogOut)
+		userAPI.POST("/logout", auth.ValidateAuth(userRepository), userHandler.LogOut)
 	}
 
 	carsAPI := router.Group("/cars")
 	{
-		carsAPI.GET("/", ValidateAuth(userRepository), carsHandler.GetAll)
-		carsAPI.GET("/:id", ValidateAuth(userRepository), carsHandler.GetByID)
-		carsAPI.POST("/", ValidateAuth(userRepository), carsHandler.Create)
-		carsAPI.PUT("/:id", ValidateAuth(userRepository), carsHandler.Update)
-		carsAPI.DELETE("/:id", ValidateAuth(userRepository), carsHandler.Delete)
+		carsAPI.GET("/", auth.ValidateAuth(userRepository), carsHandler.GetAll)
+		carsAPI.GET("/:id", auth.ValidateAuth(userRepository), carsHandler.GetByID)
+		carsAPI.POST("/", auth.ValidateAuth(userRepository), carsHandler.Create)
+		carsAPI.PUT("/:id", auth.ValidateAuth(userRepository), carsHandler.Update)
+		carsAPI.DELETE("/:id", auth.ValidateAuth(userRepository), carsHandler.Delete)
 	}
 
 	router.Run(":8080")

@@ -3,6 +3,7 @@ package services
 import (
 	"errors"
 	"fmt"
+	"go-boilerplate/logging"
 	"go-boilerplate/models"
 	"go-boilerplate/repositories"
 	"strings"
@@ -11,6 +12,7 @@ import (
 )
 
 type UserService struct {
+	logger logging.Logger
 	userRepository repositories.UserRepository
 }
 
@@ -22,8 +24,8 @@ type UserServiceContract interface {
 	LogOut(authToken string) error
 }
 
-func NewInstanceOfUserService(userRepository repositories.UserRepository) UserService {
-	return UserService{userRepository: userRepository}
+func NewInstanceOfUserService(logger logging.Logger, userRepository repositories.UserRepository) UserService {
+	return UserService{logger, userRepository}
 }
 
 func (u *UserService) SignUp(body models.SignUpBody) (string, error) {

@@ -1,9 +1,12 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
+	"go-boilerplate/logging"
 	"go-boilerplate/models"
 	"go-boilerplate/services"
 	"strconv"
@@ -11,11 +14,12 @@ import (
 )
 
 type CarsHandler struct {
-	CarsService services.CarsService
+	logger logging.Logger
+	carsService services.CarsService
 }
 
-func NewInstanceOfCarsHandler(carsService services.CarsService) *CarsHandler {
-	return &CarsHandler{CarsService: carsService}
+func NewInstanceOfCarsHandler(logger logging.Logger, carsService services.CarsService) *CarsHandler {
+	return &CarsHandler{logger, carsService}
 }
 
 func (u *CarsHandler) GetSession(c *gin.Context) (models.Session, bool) {
@@ -31,6 +35,13 @@ func (u *CarsHandler) GetSession(c *gin.Context) (models.Session, bool) {
 }
 
 func (u *CarsHandler) GetAll(c *gin.Context) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
+	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "GetAll")
+	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
+
+	u.logger.Info(ctx, "Called")
+
 	session, exists := u.GetSession(c)
 	if !exists {
 		c.JSON(403, gin.H{"message": "error: unauthorized"})
@@ -76,7 +87,7 @@ func (u *CarsHandler) GetAll(c *gin.Context) {
 		return
 	}
 
-	cars, err := u.CarsService.GetAll(session, query)
+	cars, err := u.carsService.GetAll(ctx, session, query)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -89,6 +100,11 @@ func (u *CarsHandler) GetAll(c *gin.Context) {
 }
 
 func (u *CarsHandler) GetByID(c *gin.Context) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
+	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "GetByID")
+	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
+
 	carsID := c.Param("id")
 
 	session, exists := u.GetSession(c)
@@ -97,7 +113,7 @@ func (u *CarsHandler) GetByID(c *gin.Context) {
 		return
 	}
 
-	car, err := u.CarsService.GetByID(session, carsID)
+	car, err := u.carsService.GetByID(ctx, session, carsID)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -107,6 +123,11 @@ func (u *CarsHandler) GetByID(c *gin.Context) {
 }
 
 func (u *CarsHandler) Create(c *gin.Context) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
+	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "Create")
+	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
+
 	var body models.CreateCar
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
@@ -130,7 +151,7 @@ func (u *CarsHandler) Create(c *gin.Context) {
 		return
 	}
 
-	err := u.CarsService.Create(session, body)
+	err := u.carsService.Create(ctx, session, body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -140,6 +161,11 @@ func (u *CarsHandler) Create(c *gin.Context) {
 }
 
 func (u *CarsHandler) Update(c *gin.Context) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
+	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "Update")
+	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
+
 	carsID := c.Param("id")
 
 	var body models.UpdateCar
@@ -165,7 +191,7 @@ func (u *CarsHandler) Update(c *gin.Context) {
 		return
 	}
 
-	err := u.CarsService.Update(session, carsID, body)
+	err := u.carsService.Update(ctx, session, carsID, body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -175,6 +201,11 @@ func (u *CarsHandler) Update(c *gin.Context) {
 }
 
 func (u *CarsHandler) Delete(c *gin.Context) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
+	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "Delete")
+	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
+
 	session, exists := u.GetSession(c)
 	if !exists {
 		c.JSON(403, gin.H{"message": "error: unauthorized"})
@@ -183,7 +214,7 @@ func (u *CarsHandler) Delete(c *gin.Context) {
 
 	carsID := c.Param("id")
 
-	err := u.CarsService.Delete(session, carsID)
+	err := u.carsService.Delete(ctx, session, carsID)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
