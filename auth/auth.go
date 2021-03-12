@@ -3,11 +3,11 @@ package auth
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"go-boilerplate/repositories"
+	"go-boilerplate/user"
 	"strings"
 )
 
-func ValidateAuth(userRepository repositories.UserRepository) gin.HandlerFunc {
+func ValidateAuth(userRepository user.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authToken := c.Request.Header.Get("Authorization")
 		if authToken == "" {

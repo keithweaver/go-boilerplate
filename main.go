@@ -4,17 +4,17 @@ import (
 	"context"
 	"fmt"
 	"go-boilerplate/auth"
+	"go-boilerplate/cars"
+	"go-boilerplate/health"
 	"go-boilerplate/logging"
 	"go-boilerplate/middleware"
+	"go-boilerplate/user"
 
 	//"strings"
 	// "time"
 
 	"github.com/gin-gonic/gin"
 	"go-boilerplate/db"
-	"go-boilerplate/handlers"
-	"go-boilerplate/repositories"
-	"go-boilerplate/services"
 	// "github.com/gin-contrib/cors"
 	// "database/sql"
 	_ "github.com/go-sql-driver/mysql"
@@ -38,40 +38,40 @@ func main() {
 	db := client.Database(dbName)
 
 	// Repositories
-	userRepository := repositories.NewInstanceOfUserRepository(db)
-	carsRepository := repositories.NewInstanceOfCarsRepository(db)
+	userRepository := user.NewInstanceOfUserRepository(db)
+	carsRepository := cars.NewInstanceOfCarsRepository(db)
 
 	// Services
-	userService := services.NewInstanceOfUserService(logger, userRepository)
-	carsService := services.NewInstanceOfCarsService(logger, userRepository, carsRepository)
+	userServices := user.NewInstanceOfUserServices(logger, userRepository)
+	carsServices := cars.NewInstanceOfCarsServices(logger, userRepository, carsRepository)
 
 	// Handlers
-	userHandler := handlers.NewInstanceOfUserHandler(logger, userService)
-	carsHandler := handlers.NewInstanceOfCarsHandler(logger, carsService)
+	userHandlers := user.NewInstanceOfUserHandlers(logger, userServices)
+	carsHandlers := cars.NewInstanceOfCarsHandlers(logger, carsServices)
 
 	router := gin.Default()
 	router.Use(middleware.CORSMiddleware())
 
 	healthAPI := router.Group("/")
 	{
-		healthAPI.GET("", handlers.HealthCheck)
-		healthAPI.GET("health", handlers.HealthCheck)
+		healthAPI.GET("", health.Check)
+		healthAPI.GET("health", health.Check)
 	}
 
 	userAPI := router.Group("/user")
 	{
-		userAPI.POST("/signin", userHandler.SignIn)
-		userAPI.POST("/signup", userHandler.SignUp)
-		userAPI.POST("/logout", auth.ValidateAuth(userRepository), userHandler.LogOut)
+		userAPI.POST("/signin", userHandlers.SignIn)
+		userAPI.POST("/signup", userHandlers.SignUp)
+		userAPI.POST("/logout", auth.ValidateAuth(userRepository), userHandlers.LogOut)
 	}
 
 	carsAPI := router.Group("/cars")
 	{
-		carsAPI.GET("/", auth.ValidateAuth(userRepository), carsHandler.GetAll)
-		carsAPI.GET("/:id", auth.ValidateAuth(userRepository), carsHandler.GetByID)
-		carsAPI.POST("/", auth.ValidateAuth(userRepository), carsHandler.Create)
-		carsAPI.PUT("/:id", auth.ValidateAuth(userRepository), carsHandler.Update)
-		carsAPI.DELETE("/:id", auth.ValidateAuth(userRepository), carsHandler.Delete)
+		carsAPI.GET("/", auth.ValidateAuth(userRepository), carsHandlers.GetAll)
+		carsAPI.GET("/:id", auth.ValidateAuth(userRepository), carsHandlers.GetByID)
+		carsAPI.POST("/", auth.ValidateAuth(userRepository), carsHandlers.Create)
+		carsAPI.PUT("/:id", auth.ValidateAuth(userRepository), carsHandlers.Update)
+		carsAPI.DELETE("/:id", auth.ValidateAuth(userRepository), carsHandlers.Delete)
 	}
 
 	router.Run(":8080")

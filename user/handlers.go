@@ -1,26 +1,24 @@
-package handlers
+package user
 
 import (
 	// "fmt"
 	"github.com/gin-gonic/gin"
 	validator "github.com/go-playground/validator/v10"
 	"go-boilerplate/logging"
-	"go-boilerplate/models"
-	"go-boilerplate/services"
 	"strings"
 )
 
-type UserHandler struct {
-	logger logging.Logger
-	userService services.UserService
+type Handlers struct {
+	logger      logging.Logger
+	userServices Services
 }
 
-func NewInstanceOfUserHandler(logger logging.Logger, userService services.UserService) *UserHandler {
-	return &UserHandler{logger, userService}
+func NewInstanceOfUserHandlers(logger logging.Logger, userServices Services) *Handlers {
+	return &Handlers{logger, userServices}
 }
 
-func (u *UserHandler) SignIn(c *gin.Context) {
-	var body models.SignInBody
+func (u *Handlers) SignIn(c *gin.Context) {
+	var body SignInBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -32,7 +30,7 @@ func (u *UserHandler) SignIn(c *gin.Context) {
 		return
 	}
 
-	token, err := u.userService.SignIn(body)
+	token, err := u.userServices.SignIn(body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -42,8 +40,8 @@ func (u *UserHandler) SignIn(c *gin.Context) {
 	return
 }
 
-func (u *UserHandler) SignUp(c *gin.Context) {
-	var body models.SignUpBody
+func (u *Handlers) SignUp(c *gin.Context) {
+	var body SignUpBody
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -55,7 +53,7 @@ func (u *UserHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	token, err := u.userService.SignUp(body)
+	token, err := u.userServices.SignUp(body)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -65,11 +63,11 @@ func (u *UserHandler) SignUp(c *gin.Context) {
 	return
 }
 
-func (u *UserHandler) LogOut(c *gin.Context) {
+func (u *Handlers) LogOut(c *gin.Context) {
 	authToken := c.Request.Header.Get("Authorization")
 	authToken = strings.ReplaceAll(authToken, "Bearer ", "")
 
-	err := u.userService.LogOut(authToken)
+	err := u.userServices.LogOut(authToken)
 	if err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return

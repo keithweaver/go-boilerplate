@@ -1,51 +1,51 @@
-package services
+package cars
 
 import (
 	"context"
 	"go-boilerplate/logging"
+	"go-boilerplate/user"
+
 	// "fmt"
 	"time"
-	// "strings"
-	"go-boilerplate/models"
-	"go-boilerplate/repositories"
+
 	// "errors"
 	// "github.com/google/uuid"
 )
 
-type CarsService struct {
-	logger logging.Logger
-	userRepository repositories.UserRepository
-	carsRepository repositories.CarsRepository
+type Services struct {
+	logger         logging.Logger
+	userRepository user.Repository
+	carsRepository Repository
 }
 
-func NewInstanceOfCarsService(logger logging.Logger, userRepository repositories.UserRepository, carsRepository repositories.CarsRepository) CarsService {
-	return CarsService{logger, userRepository, carsRepository}
+func NewInstanceOfCarsServices(logger logging.Logger, userRepository user.Repository, carsRepository Repository) Services {
+	return Services{logger, userRepository, carsRepository}
 }
 
-func (c *CarsService) GetAll(ctx context.Context, session models.Session, query models.ListCarQuery) ([]models.Car, error) {
+func (c *Services) GetAll(ctx context.Context, session user.Session, query ListCarQuery) ([]Car, error) {
 	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "GetAll")
 
 	cars, err := c.carsRepository.List(session.Email, query)
 	if err != nil {
-		return []models.Car{}, err
+		return []Car{}, err
 	}
 	return cars, nil
 }
 
-func (c *CarsService) GetByID(ctx context.Context, session models.Session, carID string) (models.Car, error) {
+func (c *Services) GetByID(ctx context.Context, session user.Session, carID string) (Car, error) {
 	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "GetByID")
 
 	car, err := c.carsRepository.Get(session.Email, carID)
 	if err != nil {
-		return models.Car{}, err
+		return Car{}, err
 	}
 	return car, nil
 }
 
-func (c *CarsService) Create(ctx context.Context, session models.Session, body models.CreateCar) error {
+func (c *Services) Create(ctx context.Context, session user.Session, body CreateCar) error {
 	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "Create")
 	// Create new car object
-	car := models.Car{
+	car := Car{
 		Make:    body.Make,
 		Model:   body.Model,
 		Year:    body.Year,
@@ -60,7 +60,7 @@ func (c *CarsService) Create(ctx context.Context, session models.Session, body m
 	return nil
 }
 
-func (c *CarsService) Update(ctx context.Context, session models.Session, carID string, body models.UpdateCar) error {
+func (c *Services) Update(ctx context.Context, session user.Session, carID string, body UpdateCar) error {
 	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "Update")
 	// Update car
 	err := c.carsRepository.Update(session.Email, carID, body)
@@ -70,7 +70,7 @@ func (c *CarsService) Update(ctx context.Context, session models.Session, carID 
 	return nil
 }
 
-func (c *CarsService) Delete(ctx context.Context, session models.Session, carID string) error {
+func (c *Services) Delete(ctx context.Context, session user.Session, carID string) error {
 	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "Delete")
 
 	// Delete car

@@ -1,4 +1,4 @@
-package handlers
+package cars
 
 import (
 	"context"
@@ -7,34 +7,33 @@ import (
 	validator "github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"go-boilerplate/logging"
-	"go-boilerplate/models"
-	"go-boilerplate/services"
+	"go-boilerplate/user"
 	"strconv"
 	// "strings"
 )
 
-type CarsHandler struct {
-	logger logging.Logger
-	carsService services.CarsService
+type Handlers struct {
+	logger      logging.Logger
+	carsService Services
 }
 
-func NewInstanceOfCarsHandler(logger logging.Logger, carsService services.CarsService) *CarsHandler {
-	return &CarsHandler{logger, carsService}
+func NewInstanceOfCarsHandlers(logger logging.Logger, carsService Services) *Handlers {
+	return &Handlers{logger, carsService}
 }
 
-func (u *CarsHandler) GetSession(c *gin.Context) (models.Session, bool) {
+func (u *Handlers) GetSession(c *gin.Context) (user.Session, bool) {
 	i, exists := c.Get("session")
 	if !exists {
-		return models.Session{}, false
+		return user.Session{}, false
 	}
-	session, ok := i.(models.Session)
+	session, ok := i.(user.Session)
 	if !ok {
-		return models.Session{}, false
+		return user.Session{}, false
 	}
 	return session, true
 }
 
-func (u *CarsHandler) GetAll(c *gin.Context) {
+func (u *Handlers) GetAll(c *gin.Context) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
 	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "GetAll")
@@ -72,7 +71,7 @@ func (u *CarsHandler) GetAll(c *gin.Context) {
 		return
 	}
 
-	query := models.ListCarQuery{
+	query := ListCarQuery{
 		Page:  pageInt,
 		Limit: limitInt,
 		Make:  make,
@@ -93,13 +92,13 @@ func (u *CarsHandler) GetAll(c *gin.Context) {
 		return
 	}
 	if cars == nil {
-		cars = []models.Car{}
+		cars = []Car{}
 	}
 	c.JSON(200, gin.H{"message": "Cars retrieved", "cars": cars})
 	return
 }
 
-func (u *CarsHandler) GetByID(c *gin.Context) {
+func (u *Handlers) GetByID(c *gin.Context) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
 	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "GetByID")
@@ -122,13 +121,13 @@ func (u *CarsHandler) GetByID(c *gin.Context) {
 	return
 }
 
-func (u *CarsHandler) Create(c *gin.Context) {
+func (u *Handlers) Create(c *gin.Context) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
 	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "Create")
 	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
 
-	var body models.CreateCar
+	var body CreateCar
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -160,7 +159,7 @@ func (u *CarsHandler) Create(c *gin.Context) {
 	return
 }
 
-func (u *CarsHandler) Update(c *gin.Context) {
+func (u *Handlers) Update(c *gin.Context) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
 	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "Update")
@@ -168,7 +167,7 @@ func (u *CarsHandler) Update(c *gin.Context) {
 
 	carsID := c.Param("id")
 
-	var body models.UpdateCar
+	var body UpdateCar
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(400, gin.H{"message": err.Error()})
 		return
@@ -200,7 +199,7 @@ func (u *CarsHandler) Update(c *gin.Context) {
 	return
 }
 
-func (u *CarsHandler) Delete(c *gin.Context) {
+func (u *Handlers) Delete(c *gin.Context) {
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, logging.CtxDomain, "Cars")
 	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "Delete")
