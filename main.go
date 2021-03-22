@@ -20,9 +20,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-
-
-
 func main() {
 	fmt.Println("Starting...")
 	logger := logging.NewLogger()
@@ -63,6 +60,9 @@ func main() {
 		userAPI.POST("/signin", userHandlers.SignIn)
 		userAPI.POST("/signup", userHandlers.SignUp)
 		userAPI.POST("/logout", auth.ValidateAuth(userRepository), userHandlers.LogOut)
+		userAPI.POST("/session/unlock", userHandlers.UnlockSession)
+		// TODO - Forgot password
+		// TODO - Forgot password - Enter new password
 	}
 
 	carsAPI := router.Group("/cars")

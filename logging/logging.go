@@ -1,6 +1,5 @@
 package logging
 
-
 import (
 	"context"
 	"fmt"
@@ -88,8 +87,11 @@ func (l *Logger) buildPayload(ctx context.Context, message string, error string)
 
 // AddToHelperMethods pulls the string list of help methods in the context and appends another value
 // to it. This method helps minimize writing this code in multiple spots throughout.
-func (l *Logger) AddToHelperMethods(ctx context.Context, newMethod string) string {
-	helperMethods := ctx.Value(CtxHelpMethods).(string)
+func AddToHelperMethods(ctx context.Context, newMethod string) string {
+	helperMethods := ""
+	if  ctx.Value(CtxHelpMethods) != nil {
+		helperMethods = ctx.Value(CtxHelpMethods).(string)
+	}
 	if helperMethods != "" {
 		helperMethods = fmt.Sprintf("%s, %s", helperMethods, newMethod)
 	}

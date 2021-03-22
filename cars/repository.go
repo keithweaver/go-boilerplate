@@ -12,7 +12,7 @@ import (
 )
 
 type Repository struct {
-	db *mongo.Database
+	db             *mongo.Database
 	collectionName string
 }
 

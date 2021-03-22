@@ -2,7 +2,7 @@ package user
 
 import (
 	"context"
-	// "errors"
+	// "common"
 	// "fmt"
 	"time"
 
@@ -14,9 +14,9 @@ import (
 )
 
 type Repository struct {
-	db *mongo.Database
-	usersCollection string
-	sessionsCollection  string
+	db                 *mongo.Database
+	usersCollection    string
+	sessionsCollection string
 }
 
 func NewInstanceOfUserRepository(db *mongo.Database) Repository {
@@ -94,6 +94,53 @@ func (u *Repository) GetSessionById(token string) (bool, Session, error) {
 func (u *Repository) MarkSessionAsExpired(authToken string) error {
 	filter := bson.M{"_id": authToken}
 	update := bson.M{"$set": bson.M{"expiry": time.Now()}}
+	_, err := u.db.Collection(u.sessionsCollection).UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *Repository) UpdateAccountLocked(email string, accountLock bool) error {
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{"accountLocked": accountLock}}
+	_, err := u.db.Collection(u.usersCollection).UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (u *Repository) UpdateOrAddTrustedIPToUser(email string, newIP IP) error {
+	// Check if the IP address already exists
+	filter := bson.M{"email": email, "trustedIPs.address": newIP.Address}
+	count, err := u.db.Collection(u.usersCollection).CountDocuments(context.TODO(), filter)
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		// Update the current IP information (Docs: https://docs.mongodb.com/manual/reference/operator/update/positional/#update-values-in-an-array)
+		update := bson.M{"$set": bson.M{ "trustedIPs.$": newIP}}
+		_, err = u.db.Collection(u.usersCollection).UpdateOne(context.Background(), filter, update)
+		if err != nil {
+			return err
+		}
+	}
+
+	// Push new one (Docs: https://docs.mongodb.com/manual/reference/operator/update/push/#examples)
+	update := bson.M{"$push": bson.M{"trustedIPs": newIP}}
+	_, err = u.db.Collection(u.usersCollection).UpdateOne(context.Background(), bson.M{"email": email}, update)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (u *Repository) UnlockSession(authToken string) error {
+	filter := bson.M{"_id": authToken}
+	update := bson.M{"$set": bson.M{"locked": false}}
 	_, err := u.db.Collection(u.sessionsCollection).UpdateOne(context.TODO(), filter, update)
 	if err != nil {
 		return err
