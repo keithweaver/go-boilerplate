@@ -2,6 +2,7 @@ package user
 
 import (
 	"errors"
+	"strings"
 	"time"
 	// "go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -100,4 +101,54 @@ func (b *UnlockSessionBody) Validate() error {
 		return errors.New("code is required")
 	}
 	return nil
+}
+
+type SendForgotPasswordBody struct {
+	Email string `json:"email"`
+}
+
+func (b *SendForgotPasswordBody) Validate() error {
+	if b.Email == "" {
+		return errors.New("email is required")
+	}
+	return nil
+}
+
+func (b *SendForgotPasswordBody) GetFormattedEmail() string {
+	email := strings.Trim(b.Email, " ")
+	email = strings.ToLower(email)
+	return email
+}
+
+type ResetForgotPasswordBody struct {
+	Email string `json:"email"`
+	Code string `json:"code"`
+	NewPassword string `json:"newPassword"`
+}
+
+func (b *ResetForgotPasswordBody) Validate() error {
+	if b.Email == "" {
+		return errors.New("email is required")
+	}
+	if b.Code == "" {
+		return errors.New("code is required")
+	}
+	if b.NewPassword == "" {
+		return errors.New("password is required")
+	}
+	return nil
+}
+
+func (b *ResetForgotPasswordBody) GetFormattedEmail() string {
+	email := strings.Trim(b.Email, " ")
+	email = strings.ToLower(email)
+	return email
+}
+
+type ForgotPasswordCode struct {
+	ID primitive.ObjectID `json:"id" bson:"_id,omitempty"`
+	Email string `json:"email" bson:"email"`
+	Code string `json:"-" bson:"code"`
+	Created time.Time `json:"created" bson:"created"`
+	Expiry time.Time `json:"expiry" bson:"expiry"`
 }

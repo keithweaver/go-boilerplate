@@ -147,3 +147,13 @@ func (u *Repository) UnlockSession(authToken string) error {
 	}
 	return nil
 }
+
+func (u *Repository) UpdatePassword(email string, newPassword string) error {
+	filter := bson.M{"email": email}
+	update := bson.M{"$set": bson.M{"password": newPassword}}
+	_, err := u.db.Collection(u.usersCollection).UpdateOne(context.TODO(), filter, update)
+	if err != nil {
+		return err
+	}
+	return nil
+}

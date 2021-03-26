@@ -37,9 +37,10 @@ func main() {
 	// Repositories
 	userRepository := user.NewInstanceOfUserRepository(db)
 	carsRepository := cars.NewInstanceOfCarsRepository(db)
+	forgotPasswordRepository := user.NewInstanceOfForgotPasswordRepository(db)
 
 	// Services
-	userServices := user.NewInstanceOfUserServices(logger, userRepository)
+	userServices := user.NewInstanceOfUserServices(logger, userRepository, forgotPasswordRepository)
 	carsServices := cars.NewInstanceOfCarsServices(logger, userRepository, carsRepository)
 
 	// Handlers
@@ -61,8 +62,8 @@ func main() {
 		userAPI.POST("/signup", userHandlers.SignUp)
 		userAPI.POST("/logout", auth.ValidateAuth(userRepository), userHandlers.LogOut)
 		userAPI.POST("/session/unlock", userHandlers.UnlockSession)
-		// TODO - Forgot password
-		// TODO - Forgot password - Enter new password
+		userAPI.POST("/forgot-password/", userHandlers.SendForgotPassword)
+		userAPI.POST("/forgot-password/reset", userHandlers.ForgotPassword)
 	}
 
 	carsAPI := router.Group("/cars")

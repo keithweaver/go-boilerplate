@@ -129,7 +129,6 @@ func (u *Handlers) UnlockSession(c *gin.Context) {
 
 	// Capture IP
 	clientIP := c.ClientIP()
-
 	ctx = context.WithValue(ctx, logging.CtxClientIP, clientIP)
 
 	// Get auth token
@@ -175,4 +174,75 @@ func (u *Handlers) UnlockSession(c *gin.Context) {
 
 	c.JSON(200, gin.H{"message": "Session unlocked"})
 	return
+}
+
+func (u *Handlers) SendForgotPassword(c *gin.Context) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, logging.CtxDomain, "user")
+	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "SendForgotPassword")
+	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
+
+	// Capture IP
+	clientIP := c.ClientIP()
+	ctx = context.WithValue(ctx, logging.CtxClientIP, clientIP)
+
+	// Get code from request body
+	var body SendForgotPasswordBody
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Warning(ctx, "invalid request body", err)
+		common.ReturnErrorResponse(c, &common.Error{StatusCode: 400})
+		return
+	}
+
+	if err := body.Validate(); err != nil {
+		u.logger.Warning(ctx, "validation failed on request body", err)
+		common.ReturnErrorResponse(c, &common.Error{StatusCode: 400, Message: err.Error()})
+		return
+	}
+
+	// Call the service
+	err := u.userServices.SendForgotPassword(ctx, clientIP, body)
+	if err != nil {
+		common.ReturnErrorResponse(c, err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Email sent"})
+	return
+}
+
+func (u *Handlers) ForgotPassword(c *gin.Context) {
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, logging.CtxDomain, "user")
+	ctx = context.WithValue(ctx, logging.CtxHandlerMethod, "ForgotPassword")
+	ctx = context.WithValue(ctx, logging.CtxRequestID, uuid.New().String())
+
+	// Capture IP
+	clientIP := c.ClientIP()
+	ctx = context.WithValue(ctx, logging.CtxClientIP, clientIP)
+
+	// Get code from request body
+	var body ResetForgotPasswordBody
+	if err := c.ShouldBindJSON(&body); err != nil {
+		u.logger.Warning(ctx, "invalid request body", err)
+		common.ReturnErrorResponse(c, &common.Error{StatusCode: 400})
+		return
+	}
+
+	if err := body.Validate(); err != nil {
+		u.logger.Warning(ctx, "validation failed on request body", err)
+		common.ReturnErrorResponse(c, &common.Error{StatusCode: 400, Message: err.Error()})
+		return
+	}
+
+	// Call the service
+	err := u.userServices.ForgotPassword(ctx, clientIP, body)
+	if err != nil {
+		common.ReturnErrorResponse(c, err)
+		return
+	}
+
+	c.JSON(200, gin.H{"message": "Password has been reset"})
+	return
+
 }

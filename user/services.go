@@ -8,6 +8,7 @@ import (
 	"github.com/mssola/user_agent"
 	"go-boilerplate/common"
 	"go-boilerplate/emails/accountlockemail"
+	"go-boilerplate/emails/forgotpasswordemail"
 	"go-boilerplate/emails/sessionunlockemail"
 	"go-boilerplate/emails/signinemail"
 	"go-boilerplate/emails/verifyemail"
@@ -23,6 +24,7 @@ import (
 type Services struct {
 	logger         logging.Logger
 	userRepository Repository
+	forgotPasswordRepository ForgotPasswordRepository
 }
 
 type ServiceContract interface {
@@ -31,8 +33,8 @@ type ServiceContract interface {
 	LogOut(authToken string) error
 }
 
-func NewInstanceOfUserServices(logger logging.Logger, userRepository Repository) Services {
-	return Services{logger, userRepository}
+func NewInstanceOfUserServices(logger logging.Logger, userRepository Repository, forgotPasswordRepository ForgotPasswordRepository) Services {
+	return Services{logger, userRepository, forgotPasswordRepository}
 }
 
 // SignUp signs up the new account (or signs in the user).
@@ -120,6 +122,7 @@ func (s *Services) SignUp(ctx context.Context, userAgent *user_agent.UserAgent, 
 }
 
 func (s *Services) isValidPassword(ctx context.Context, password string) bool {
+	// TODO - Change to return an error instead with the problem
 	if len(password) < 8 {
 		s.logger.Warning(ctx, "password is less than 8 characters", errors.New("error: invalid password"))
 		// Length is less than 8
@@ -437,8 +440,140 @@ func (s *Services) UnlockSession(ctx context.Context, currentIP string, authToke
 				StatusCode: 500,
 			}
 		}
+
+		return nil
 	}
 	return &common.Error{
 		StatusCode: 403,
 	}
+}
+
+// SendForgotPassword sends a forgot password code via email to the user to reset their link. Since this is an
+// unprotected endpoint (not auth) and we are calling a third party service (Sendgrid). We throttle the number of
+// forgot password requests by a particular IP. 25 in 24 hours. There can be exceptions but this is on a case by
+// case basis. I'd imagine places like universities would break this.
+func (s *Services) SendForgotPassword(ctx context.Context, currentIP string, body SendForgotPasswordBody) *common.Error {
+	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "SendForgotPassword")
+	if body.Email == "" {
+		s.logger.Warning(ctx, "Email is missing", errors.New("error: email required"))
+		return &common.Error{
+			StatusCode: 400,
+			Message: "Email is required",
+		}
+	}
+
+	// Verify email exists
+	userExists, user, err := s.userRepository.GetUserByEmail(body.GetFormattedEmail())
+	if err != nil {
+		s.logger.Warning(ctx, "failed to look up user", err)
+		return &common.Error{
+			StatusCode: 500,
+		}
+	}
+	if !userExists {
+		s.logger.Warning(ctx, "user does not exists", errors.New("not found"))
+		return &common.Error{
+			StatusCode: 200,
+			Message: "Forgot password email sent",
+		}
+	}
+
+	// Create instance
+	code := uuid.New().String()
+	now := time.Now()
+	expiry := now.AddDate(0, 0, 1)
+	err = s.forgotPasswordRepository.Save(ForgotPasswordCode{
+		Email: body.GetFormattedEmail(),
+		Code: code,
+		Created: now,
+		Expiry: expiry,
+	})
+	if err != nil {
+		s.logger.Warning(ctx, "failed to save forgot password", err)
+		return &common.Error{
+			StatusCode: 500,
+		}
+	}
+
+	// Send email
+	err = forgotpasswordemail.SendForgotPasswordEmail(user.Greeting(), body.GetFormattedEmail(), code)
+	if err != nil {
+		s.logger.Warning(ctx, "failed to send the forgot password email", err)
+		return &common.Error{
+			StatusCode: 500,
+		}
+	}
+
+	return nil
+}
+
+func (s *Services) ForgotPassword(ctx context.Context, currentIP string, body ResetForgotPasswordBody) *common.Error {
+	ctx = context.WithValue(ctx, logging.CtxServiceMethod, "ForgotPassword")
+
+	// Validate all fields
+	if body.GetFormattedEmail() == "" {
+		s.logger.Warning(ctx, "email is required", errors.New("error: invalid request"))
+		return &common.Error{
+			StatusCode: 400,
+			Message: "Email is required",
+		}
+	}
+	if body.Code == "" {
+		s.logger.Warning(ctx, "email is required", errors.New("error: invalid request"))
+		return &common.Error{
+			StatusCode: 400,
+			Message: "Code is required",
+		}
+	}
+
+	// TODO - Add some throttling
+
+	// Check if forgot password code exists
+	exists, err := s.forgotPasswordRepository.Exists(body.GetFormattedEmail(), body.Code)
+	if err != nil {
+		s.logger.Warning(ctx, "failed to check if forgot password exists", err)
+		return &common.Error{
+			StatusCode: 500,
+		}
+	}
+	if !exists {
+		s.logger.Warning(ctx, "invalid email + code combination for forgot password", errors.New("unauthorized"))
+		return &common.Error{
+			StatusCode: 403,
+		}
+	}
+
+	// Validate password strength
+	if !s.isValidPassword(ctx, body.NewPassword) {
+		s.logger.Error(ctx, "password does not meet requirements", errors.New("invalid password"))
+		return &common.Error{
+			StatusCode: 400,
+			Message: "Password does not meet requirements",
+		}
+	}
+
+	// Update password
+	hash, err := s.getEncryptedPassword(body.NewPassword)
+	if err != nil {
+		s.logger.Warning(ctx, "failed to hash password", err)
+		return &common.Error{
+			StatusCode: 500,
+		}
+	}
+	err = s.userRepository.UpdatePassword(body.GetFormattedEmail(), hash)
+	if err != nil {
+		s.logger.Warning(ctx, "failed to update password", err)
+		return &common.Error{
+			StatusCode: 500,
+		}
+	}
+
+	// Update forgot password code
+	err = s.forgotPasswordRepository.MarkCodeAsComplete(body.GetFormattedEmail(), body.Code)
+	if err != nil {
+		s.logger.Error(ctx, "failed to update mark code as completed", err)
+		// Not returning error for UX
+	}
+
+	return nil
 }
