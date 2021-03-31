@@ -5,10 +5,12 @@ import (
 	"fmt"
 	"go-boilerplate/auth"
 	"go-boilerplate/cars"
+	"go-boilerplate/env"
 	"go-boilerplate/health"
 	"go-boilerplate/logging"
 	"go-boilerplate/middleware"
 	"go-boilerplate/user"
+	"os"
 
 	//"strings"
 	// "time"
@@ -24,7 +26,9 @@ func main() {
 	fmt.Println("Starting...")
 	logger := logging.NewLogger()
 
-	dbName := "demoDB" // move to env
+	env.VerifyRequiredEnvVarsSet()
+
+	dbName := os.Getenv("DB_NAME")
 	client, err := db.CreateDatabaseConnection(dbName)
 	if err != nil {
 		fmt.Println("Failed to connect to DB")
