@@ -20,9 +20,6 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
-
-
-
 func main() {
 	fmt.Println("Starting...")
 	logger := logging.NewLogger()
@@ -40,9 +37,10 @@ func main() {
 	// Repositories
 	userRepository := user.NewInstanceOfUserRepository(db)
 	carsRepository := cars.NewInstanceOfCarsRepository(db)
+	forgotPasswordRepository := user.NewInstanceOfForgotPasswordRepository(db)
 
 	// Services
-	userServices := user.NewInstanceOfUserServices(logger, userRepository)
+	userServices := user.NewInstanceOfUserServices(logger, userRepository, forgotPasswordRepository)
 	carsServices := cars.NewInstanceOfCarsServices(logger, userRepository, carsRepository)
 
 	// Handlers
@@ -63,6 +61,9 @@ func main() {
 		userAPI.POST("/signin", userHandlers.SignIn)
 		userAPI.POST("/signup", userHandlers.SignUp)
 		userAPI.POST("/logout", auth.ValidateAuth(userRepository), userHandlers.LogOut)
+		userAPI.POST("/session/unlock", userHandlers.UnlockSession)
+		userAPI.POST("/forgot-password/", userHandlers.SendForgotPassword)
+		userAPI.POST("/forgot-password/reset", userHandlers.ForgotPassword)
 	}
 
 	carsAPI := router.Group("/cars")

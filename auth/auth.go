@@ -28,6 +28,11 @@ func ValidateAuth(userRepository user.Repository) gin.HandlerFunc {
 			c.AbortWithStatus(403)
 			return
 		}
+		if session.Locked {
+			fmt.Println("Session locked")
+			c.AbortWithStatus(403)
+			return
+		}
 		c.Set("session", session)
 
 		c.Next()
