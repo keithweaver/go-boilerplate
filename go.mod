@@ -10,6 +10,6 @@ require (
 	github.com/mssola/user_agent v0.5.2
 	github.com/sendgrid/rest v2.6.2+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
-	go.mongodb.org/mongo-driver v1.4.0
-	golang.org/x/crypto v0.0.0-20190530122614-20be4c3c3ed5
+	go.mongodb.org/mongo-driver v1.5.1
+	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a073
 )
