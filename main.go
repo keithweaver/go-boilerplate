@@ -64,7 +64,7 @@ func main() {
 	{
 		userAPI.POST("/signin", userHandlers.SignIn)
 		userAPI.POST("/signup", userHandlers.SignUp)
-		userAPI.POST("/logout", auth.ValidateAuth(userRepository), userHandlers.LogOut)
+		userAPI.POST("/signout", auth.ValidateAuth(userRepository), userHandlers.LogOut)
 		userAPI.POST("/session/unlock", userHandlers.UnlockSession)
 		userAPI.POST("/forgot-password/", userHandlers.SendForgotPassword)
 		userAPI.POST("/forgot-password/reset", userHandlers.ForgotPassword)
