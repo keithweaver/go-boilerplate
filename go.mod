@@ -1,6 +1,6 @@
 module go-boilerplate
 
-go 1.14
+go 1.18
 
 require (
 	github.com/gin-gonic/gin v1.7.0
@@ -11,5 +11,5 @@ require (
 	github.com/sendgrid/rest v2.6.2+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	go.mongodb.org/mongo-driver v1.5.1
-	golang.org/x/crypto v0.0.0-20200302210943-78000ba7a07
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 )
