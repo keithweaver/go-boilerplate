@@ -10,7 +10,7 @@ require (
 	github.com/mssola/user_agent v0.5.2
 	github.com/sendgrid/sendgrid-go v3.8.0+incompatible
 	go.mongodb.org/mongo-driver v1.5.1
-	golang.org/x/crypto v0.9.0
+	golang.org/x/crypto v0.17.0
 )
 
 require (
@@ -44,8 +44,8 @@ require (
 	golang.org/x/arch v0.3.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
 	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e // indirect
-	golang.org/x/sys v0.8.0 // indirect
-	golang.org/x/text v0.9.0 // indirect
+	golang.org/x/sys v0.15.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
